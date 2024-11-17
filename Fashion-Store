@@ -41,3 +41,434 @@ class ChangeAnnotatedRegion extends StatelessWidget {
     );
   }
 }
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:my_flutter_app/controller/user_controller.dart';
+import 'package:my_flutter_app/model/user_model.dart';
+import 'package:my_flutter_app/pages/app/navigation.dart';
+import 'package:my_flutter_app/pages/auth/register.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
+// Chức năng đăng nhập
+class Login extends StatefulWidget {
+  const Login({super.key});
+
+  @override
+  State<Login> createState() => _LoginState();
+}
+
+class _LoginState extends State<Login> {
+  final UserController userController = UserController();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  bool _obscurePassword =
+      true; // biến thể hiện trạng thái: hiện password hoặc ẩn password
+
+  // Hàm này dùng để hiện thông báo
+  void _showToast(String message, {bool isSuccess = true}) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: isSuccess ? Colors.green : Colors.red,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        toolbarHeight: 10,
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 20,
+              ),
+              Align(
+                alignment: Alignment.topCenter,
+                child: Image.asset(
+                  'assets/images/logo1.jpg',
+                  width: 250,
+                  height: 250,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Text(
+                'Đăng nhập',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                decoration: const InputDecoration(
+                  labelText: '0909 999 999',
+                  prefixIcon: Icon(Icons.phone),
+                  enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.blue, // Màu của border khi không focus
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(8))),
+                  focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.blue, // Màu của border khi focus
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(8))),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: passwordController,
+                obscureText:
+                    _obscurePassword, // sử dụng để cập trạng thái hiện hoặc ẩn của thẻ input password
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.lock),
+                  enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.blue, // Màu của border khi không focus
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(8))),
+                  focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.blue, // Màu của border khi focus
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(8))),
+                  labelText: 'Mật khẩu',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(50),
+                  padding: const EdgeInsets.all(8),
+                  backgroundColor: Colors.blue,
+                ),
+                child: const Text(
+                  'ĐĂNG NHẬP',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+                onPressed: () async {
+                  String phoneNumber = phoneController.text;
+                  String password = passwordController.text;
+
+                  try {
+                    User? user = await userController.getUserByPhoneAndPassword(
+                        int.parse(phoneNumber), password);
+
+                    if (user != null) {
+                      _showToast('Đăng nhập thành công.', isSuccess: true);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => PageNavigationBar(
+                                isAdmin: '${user.isAdmin}',
+                                idUser: '${user.id}')),
+                      );
+                    } else {
+                      _showToast(
+                          "Đăng nhập thất bại! Vui lòng kiểm tra lại số điện thoại và mật khẩu.",
+                          isSuccess: false);
+                    }
+                  } catch (e) {
+                    print(e);
+                  }
+                },
+              ),
+              const SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'Chưa có tài khoản ',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Register()),
+                      );
+                    },
+                    child: Text(
+                      'ĐĂNG KÝ',
+                      style: TextStyle(
+                          color: const Color.fromARGB(255, 172, 20, 9),
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:my_flutter_app/controller/user_controller.dart';
+import 'package:my_flutter_app/model/user_model.dart';
+import 'package:my_flutter_app/pages/auth/login.dart';
+
+// Luồng đi  trong app: Register => Login =>  navigation (xem chi tiết tại page)
+// Muốn biết khi click vào button thì sẽ tới file nào thì giữ Ctrl và click vào file VD như: Login()
+// Navigator.push(
+//                           context,
+//                           MaterialPageRoute(builder: (context) => Login()), <=
+//                         );
+// Chức năng đăng kí
+class Register extends StatefulWidget {
+  const Register({super.key});
+
+  @override
+  _RegisterState createState() => _RegisterState();
+}
+
+class _RegisterState extends State<Register> {
+  final UserController userController = UserController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool obscurePassword =
+      true; // biến thể hiện trạng thái: hiện password hoặc ẩn password
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        toolbarHeight: 10,
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 20,
+              ),
+              Align(
+                alignment: Alignment.topCenter,
+                child: Image.asset(
+                  'assets/images/logo1.jpg',
+                  width: 250,
+                  height: 250,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Text(
+                'Đăng ký',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(
+                height: 20,
+              ),
+              TextFormField(
+                controller:
+                    _nameController, // các thẻ input này sẽ thông qua controller để cập nhật giá trị
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.person_outline),
+                  enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.blue, // Màu của border khi không focus
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(8))),
+                  focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.blue, // Màu của border khi focus
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(8))),
+                  labelText: 'Họ và tên',
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _phoneController,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.phone),
+                  enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.blue, // Màu của border khi không focus
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(8))),
+                  focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.blue, // Màu của border khi focus
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(8))),
+                  labelText: '0909 999 999',
+                ),
+                keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ], // Only digits allowed
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _passwordController,
+                obscureText:
+                    obscurePassword, // sử dụng để cập trạng thái hiện hoặc ẩn của thẻ input password
+                decoration: InputDecoration(
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        obscurePassword = !obscurePassword;
+                      });
+                    },
+                  ),
+                  prefixIcon: const Icon(Icons.lock),
+                  enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.blue, // Màu của border khi không focus
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(8))),
+                  focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.blue, // Màu của border khi focus
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(8))),
+                  labelText: 'Nhập mật khẩu',
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                    padding: const EdgeInsets.all(8),
+                    backgroundColor: Colors.blue,
+                  ),
+                  child: const Text(
+                    'ĐĂNG KÝ',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                  onPressed: () async {
+                    String id = UniqueKey().toString(); // tạo ID ngẫu nhiên
+                    String name = _nameController
+                        .text; // lấy giá trị của thẻ input thông qua các tên controller đã khai báo ở trên
+                    String phone = _phoneController.text;
+                    String password = _passwordController.text;
+                    // tạo một đối tượng User để lưu các thông tin vào User
+                    User user = User(
+                        id: id,
+                        name: name,
+                        phone_number: int.parse(phone),
+                        password: password,
+                        isAdmin: false,
+                        address: '',
+                        avatarUrl: '');
+                    // sử dụng try catch để bắt lỗi khi thao tác tới firestore
+                    try {
+                      // thông qua UserController và chức năng đăng kí đã được viết để đăng kí User mới
+                      await userController.registerUser(user);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Login()),
+                      );
+                    } catch (e) {
+                      print("Error adding document: $e");
+                    }
+                  }),
+              const SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'Đã có tài khoản ',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Login()),
+                      );
+                    },
+                    child: Text(
+                      'ĐĂNG NHẬP',
+                      style: TextStyle(
+                          color: const Color.fromARGB(255, 172, 20, 9),
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
